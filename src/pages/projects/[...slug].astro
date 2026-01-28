@@ -1,0 +1,71 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
+import { getCollection, render } from "astro:content";
+import { Icon } from "astro-icon/components";
+import PageLayout from "@/layouts/Base.astro";
+
+export const getStaticPaths = (async () => {
+	const projects = await getCollection("project");
+	return projects.map((project) => ({
+		params: { slug: project.id },
+		props: { project },
+	}));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+
+const meta = {
+	description: project.data.description,
+	title: project.data.title,
+};
+---
+
+<PageLayout meta={meta}>
+	<article class="max-w-prose">
+		<header class="mb-8">
+			<h1 class="title mb-4">{project.data.title}</h1>
+			<p class="text-lg text-gray-600 dark:text-gray-400">{project.data.description}</p>
+			<div class="mt-4 flex flex-wrap gap-2">
+				{
+					project.data.tech.map((t: string) => (
+						<span class="rounded bg-gray-100 px-2 py-1 text-sm dark:bg-gray-800">{t}</span>
+					))
+				}
+			</div>
+			<div class="mt-4 flex gap-4">
+				{
+					project.data.github && (
+						<a
+							href={project.data.github}
+							target="_blank"
+							rel="noreferrer"
+							class="inline-flex items-center gap-1 text-sm hover:text-accent"
+						>
+							<Icon name="mdi:github" class="h-5 w-5" />
+							GitHub
+						</a>
+					)
+				}
+				{
+					project.data.demo && (
+						<a
+							href={project.data.demo}
+							target="_blank"
+							rel="noreferrer"
+							class="inline-flex items-center gap-1 text-sm hover:text-accent"
+						>
+							<Icon name="mdi:open-in-new" class="h-5 w-5" />
+							Demo
+						</a>
+					)
+				}
+			</div>
+		</header>
+		<div class="prose prose-sm prose-headings:font-semibold prose-headings:text-accent-2 max-w-none">
+			<Content />
+		</div>
+	</article>
+</PageLayout>
