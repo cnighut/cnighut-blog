@@ -169,6 +169,10 @@ export async function getReviewComments(): Promise<ReviewComment[]> {
 	}
 }
 
+const EXCLUDED_REPOS = new Set([
+	"shrutikapoor08/devjoke",
+]);
+
 const KNOWN_REPOS: Record<string, { description: string; stars: number }> = {
 	"abhigyanpatwari/GitNexus": {
 		description: "Code knowledge graph tool for understanding and navigating codebases",
@@ -194,6 +198,10 @@ export async function getContributionsByRepo(): Promise<RepoContribution[]> {
 		const [owner] = pr.repo.split("/");
 
 		if (owner === GITHUB_USERNAME) {
+			continue;
+		}
+
+		if (EXCLUDED_REPOS.has(pr.repo)) {
 			continue;
 		}
 
