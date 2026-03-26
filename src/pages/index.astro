@@ -1,13 +1,17 @@
 ---
 import { type CollectionEntry } from "astro:content";
+import { Icon } from "astro-icon/components";
 import PostPreview from "@/components/blog/PostPreview.astro";
 import SocialList from "@/components/SocialList.astro";
 import { getAllPosts } from "@/data/post";
 import PageLayout from "@/layouts/Base.astro";
 import { collectionDateSort } from "@/utils/date";
+import { getAllContributions } from "@/utils/github";
 
 const allPosts = await getAllPosts();
 const allPostsByDate = allPosts.sort(collectionDateSort) as CollectionEntry<"post">[];
+
+const { repos, totalPRs, totalMerged, reviewComments } = await getAllContributions();
 ---
 
 <PageLayout meta={{ title: "Home" }}>
@@ -19,11 +23,12 @@ const allPostsByDate = allPosts.sort(collectionDateSort) as CollectionEntry<"pos
 		</p>
 		<SocialList />
 	</section>
+
 	<section class="mt-16">
 		<h2 class="title text-accent mb-6 text-xl"><a href="/posts/">Posts</a></h2>
 		<ul class="space-y-4" role="list">
 			{
-				allPostsByDate.map((p) => (
+				allPostsByDate.slice(0, 5).map((p) => (
 					<li class="grid gap-1 sm:grid-cols-[auto_1fr]">
 						<PostPreview post={p} />
 					</li>
@@ -32,6 +37,103 @@ const allPostsByDate = allPosts.sort(collectionDateSort) as CollectionEntry<"pos
 		</ul>
 		{allPostsByDate.length === 0 && (
 			<p class="text-gray-500">No posts yet. Check back soon!</p>
+		)}
+		{allPostsByDate.length > 5 && (
+			<a href="/posts/" class="mt-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-accent">
+				View all {allPostsByDate.length} posts
+				<Icon name="mdi:arrow-right" class="h-4 w-4" />
+			</a>
+		)}
+	</section>
+
+	<section class="mt-16">
+		<h2 class="title text-accent mb-6 text-xl">
+			<a href="/opensource/" class="inline-flex items-center gap-2 hover:underline">
+				<Icon name="mdi:github" class="h-6 w-6" />
+				Open Source Contributions
+			</a>
+		</h2>
+		<p class="mb-6 text-gray-600 dark:text-gray-400">
+			{totalMerged} merged PRs across {repos.length} repositories
+		</p>
+
+		{(() => {
+			let prCount = 0;
+			const maxPRs = 20;
+			return repos.map((repoContrib) => {
+				if (prCount >= maxPRs) return null;
+				const prsToShow = repoContrib.prs.slice(0, Math.min(5, maxPRs - prCount));
+				prCount += prsToShow.length;
+				return (
+					<div class="mb-8 border-b border-gray-200 pb-6 last:border-0 dark:border-gray-700">
+						<div class="mb-3 flex items-center gap-2">
+							<a 
+								href={repoContrib.repoUrl} 
+								target="_blank" 
+								rel="noreferrer"
+								class="text-lg font-semibold hover:text-accent"
+							>
+								{repoContrib.repo}
+							</a>
+							{repoContrib.stars > 0 && (
+								<span class="inline-flex items-center gap-1 text-xs text-gray-500">
+									<Icon name="mdi:star" class="h-3 w-3" />
+									{repoContrib.stars.toLocaleString()}
+								</span>
+							)}
+						</div>
+						{repoContrib.description && (
+							<p class="mb-3 text-sm text-gray-500 dark:text-gray-400">{repoContrib.description}</p>
+						)}
+						<ul class="space-y-2" role="list">
+							{prsToShow.map((pr) => (
+								<li class="flex items-start gap-2">
+									<span class={`mt-0.5 inline-flex w-14 shrink-0 items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium ${
+										pr.status === "merged" 
+											? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200" 
+											: pr.status === "open"
+												? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+												: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+									}`}>
+										{pr.status === "merged" ? "Merged" : pr.status === "open" ? "Open" : "Closed"}
+									</span>
+									<div class="flex-1 min-w-0">
+										<a 
+											href={pr.url}
+											target="_blank"
+											rel="noreferrer"
+											class="cactus-link text-sm font-medium"
+										>
+											#{pr.number} {pr.title}
+										</a>
+										<p class="text-xs text-gray-500">{pr.date}</p>
+									</div>
+								</li>
+							))}
+						</ul>
+						{repoContrib.prs.length > 5 && (
+							<a 
+								href="/opensource/"
+								class="mt-2 inline-flex items-center gap-1 text-xs text-gray-500 hover:text-accent"
+							>
+								+{repoContrib.prs.length - 5} more PRs
+								<Icon name="mdi:arrow-right" class="h-3 w-3" />
+							</a>
+						)}
+					</div>
+				);
+			});
+		})()}
+
+		{repos.length === 0 && (
+			<p class="text-gray-500">No contributions found.</p>
+		)}
+
+		{totalPRs > 20 && (
+			<a href="/opensource/" class="mt-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-accent">
+				View all {totalPRs} contributions
+				<Icon name="mdi:arrow-right" class="h-4 w-4" />
+			</a>
 		)}
 	</section>
 </PageLayout>

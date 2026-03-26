@@ -1,0 +1,101 @@
+---
+import { Icon } from "astro-icon/components";
+import PageLayout from "@/layouts/Base.astro";
+import { getAllContributions } from "@/utils/github";
+
+const { repos, totalPRs, totalMerged, reviewComments } = await getAllContributions();
+
+const meta = {
+	description: "Open source contributions by Chirag Nighut",
+	title: "Open Source",
+};
+---
+
+<PageLayout meta={meta}>
+	<h1 class="title mb-6">Open Source Contributions</h1>
+	<p class="mb-8 text-gray-600 dark:text-gray-400">
+		{totalMerged} merged PRs across {repos.length} repositories
+	</p>
+
+	{repos.map((repoContrib) => (
+		<div class="mb-10 border-b border-gray-200 pb-8 last:border-0 dark:border-gray-700">
+			<div class="mb-4 flex items-center gap-3">
+				<Icon name="mdi:github" class="h-6 w-6 text-gray-500" />
+				<a 
+					href={repoContrib.repoUrl} 
+					target="_blank" 
+					rel="noreferrer"
+					class="text-xl font-semibold hover:text-accent"
+				>
+					{repoContrib.repo}
+				</a>
+				{repoContrib.stars > 0 && (
+					<span class="inline-flex items-center gap-1 text-sm text-gray-500">
+						<Icon name="mdi:star" class="h-4 w-4" />
+						{repoContrib.stars.toLocaleString()}
+					</span>
+				)}
+			</div>
+			{repoContrib.description && (
+				<p class="mb-4 text-gray-500 dark:text-gray-400">{repoContrib.description}</p>
+			)}
+			<ul class="space-y-3" role="list">
+				{repoContrib.prs.map((pr) => (
+					<li class="flex items-start gap-3">
+						<span class={`mt-0.5 inline-flex w-14 shrink-0 items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium ${
+							pr.status === "merged" 
+								? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200" 
+								: pr.status === "open"
+									? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+									: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+						}`}>
+							{pr.status === "merged" ? "Merged" : pr.status === "open" ? "Open" : "Closed"}
+						</span>
+						<div class="flex-1 min-w-0">
+							<a 
+								href={pr.url}
+								target="_blank"
+								rel="noreferrer"
+								class="cactus-link font-medium"
+							>
+								#{pr.number} {pr.title}
+							</a>
+							<p class="text-sm text-gray-500">{pr.date}</p>
+						</div>
+					</li>
+				))}
+			</ul>
+		</div>
+	))}
+
+	{repos.length === 0 && (
+		<p class="text-gray-500">No contributions found.</p>
+	)}
+
+	{reviewComments.length > 0 && (
+		<section class="mt-12">
+			<h2 class="title text-accent mb-6 text-xl">
+				<span class="inline-flex items-center gap-2">
+					<Icon name="mdi:comment-text-outline" class="h-6 w-6" />
+					PR Reviews
+				</span>
+			</h2>
+			<ul class="space-y-4" role="list">
+				{reviewComments.map((comment) => (
+					<li class="border-l-2 border-gray-200 pl-4 dark:border-gray-700">
+						<a 
+							href={comment.url}
+							target="_blank"
+							rel="noreferrer"
+							class="font-medium hover:text-accent"
+						>
+							{comment.prTitle}
+						</a>
+						<p class="mt-1 text-gray-600 dark:text-gray-400">{comment.body}</p>
+						<p class="mt-1 text-sm text-gray-500">{comment.date}</p>
+					</li>
+				))}
+			</ul>
+		</section>
+	)}
+</PageLayout>

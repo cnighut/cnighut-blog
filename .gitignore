@@ -23,3 +23,12 @@ pnpm-debug.log*
 *.pem
 .cache
 .astro
+.gitnexus
+
+# GitNexus (auto-added)
+.gitnexus/
+.gitnexusignore
+.claude/
+AGENTS.md
+CLAUDE.md
+.cursorrules
