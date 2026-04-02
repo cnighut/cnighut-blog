@@ -2,7 +2,6 @@
 
 Personal blog built with [Astro](https://astro.build) using the [Astro Cactus](https://github.com/chrismwilliams/astro-theme-cactus) theme.
 
-
 ## Quick Start
 
 ```bash
